@@ -1,11 +1,11 @@
-const express = require("express");
-const cors = require("cors");
-const authRoutes = require("./src/routes/authRoutes");
-const connectDB = require("./src/db/db");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import authRoutes from "./src/routes/authRoutes.js";
+import connectDB from "./src/db/db.js";
+import { config as dotenvConfig } from "dotenv";
+dotenvConfig();
 const app = express();
-const port = process.env.PORT || 5000;
-//ashar access
+const port = process.env.PORT || 8080;
 app.use(cors());
 app.use(express.json());
 app.use("/", authRoutes);
