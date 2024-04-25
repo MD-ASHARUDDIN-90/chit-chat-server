@@ -16,6 +16,21 @@ const userSchema = new mongoose.Schema({
 		type: String,
 		required: true,
 	},
+	profilePicture: {
+		type: String,
+		default:
+			"https://res.cloudinary.com/dmgyhxdck/image/upload/v1714072221/chit-chat/foszghw3jpppl1sw2rb4.png",
+	},
+	otp: {
+		type: Number,
+	},
+	otp_expiry: {
+		type: Date,
+	},
+	verified: {
+		type: Boolean,
+		default: false,
+	},
 	createdAt: {
 		type: Date,
 		default: Date.now,
