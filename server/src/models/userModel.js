@@ -22,10 +22,10 @@ const userSchema = new mongoose.Schema({
 			"https://res.cloudinary.com/dmgyhxdck/image/upload/v1714072221/chit-chat/foszghw3jpppl1sw2rb4.png",
 	},
 	otp: {
-		type: Number,
+		type: Number || null,
 	},
 	otp_expiry: {
-		type: Date,
+		type: Date || null,
 	},
 	verified: {
 		type: Boolean,
