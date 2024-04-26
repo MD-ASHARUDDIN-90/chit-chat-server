@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./src/routes/authRoutes.js";
+import refreshToken from "./src/routes/refreshTokenRoutes.js";
+import message from "./src/routes/messageRoutes.js";
 import connectDB from "./src/db/db.js";
 import { config as dotenvConfig } from "dotenv";
 import { sendEmail } from "./src/utility/sendEmail.js";
@@ -21,6 +23,8 @@ app.use(express.static("public"));
 
 //routes
 app.use("/api/auth", authRoutes);
+app.use("/api/message", message);
+app.use("/api/refresh-token", refreshToken);
 
 //temporary routes
 /*
@@ -36,6 +40,7 @@ app.use("/api/auth", authRoutes);
  * @param {Object} res - The response object.
  * @return {string} The response indicating whether the email was sent successfully or not.
  */
+
 app.post("/send-email", async (req, res) => {
 	try {
 		const { email, subject, text, html } = req.body;

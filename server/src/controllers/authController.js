@@ -1,10 +1,17 @@
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import Users from "../models/userModel.js";
+import UserToken from "../models/userTokenModel.js";
 import { uploadToCloudinary } from "../utility/cloudinary.js";
+import {
+	generateRefreshToken,
+	generateToken,
+} from "../utility/generateToken.js";
+import {
+	comparePassword,
+	createHashedPassword,
+} from "../utility/hashedPassword.js";
+import verifyRefreshToken from "../utility/verifyRefreshToken.js";
 
 async function login(req, res) {
-	const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 	const { username, password } = req.body;
 
 	if (!username || !password) {
@@ -20,18 +27,45 @@ async function login(req, res) {
 			return res.status(401).json({ message: "Invalid username or password" });
 		}
 
-		const match = await bcrypt.compare(password, user.password);
+		if (!user.verified) {
+			return res.status(401).json({ message: "Please verify your email" });
+		}
+
+		const match = await comparePassword(password, user.password);
 		if (!match) {
 			return res.status(401).json({ message: "Invalid username or password" });
 		}
-		const token = jwt.sign({ username: user.username }, JWT_SECRET_KEY, {
-			expiresIn: "1h",
+
+		try {
+			const userToken = await UserToken.findOne({ userId: user._id });
+			if (userToken) {
+				// If the user already has a refresh token, delete it
+				await UserToken.findByIdAndDelete(userToken._id);
+			} // If the user doesn't have a refresh token, do nothing
+		} catch (error) {
+			// If there's an error, ignore it and move on
+			console.error("Error deleting refresh token:", error);
+		}
+
+		// If the user doesn't have a refresh token, create a new one
+
+		const accessToken = generateToken(user._id);
+		const refreshToken = generateRefreshToken(user._id);
+		// Save the refresh token in the database
+		const newRefreshToken = new UserToken({
+			userId: user._id,
+			token: refreshToken,
+			expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
 		});
+
+		await newRefreshToken.save();
+
 		res.json({
 			username: user.username,
 			email: user.email,
 			createdAt: user.createdAt,
-			token,
+			accessToken,
+			refreshToken,
 		});
 	} catch (error) {
 		console.error("Login error:", error);
@@ -67,7 +101,7 @@ async function signup(req, res) {
 				.status(409)
 				.json({ message: "Username or email already exists" });
 		}
-		const hashedPassword = await bcrypt.hash(password, 10);
+		const hashedPassword = await createHashedPassword(password);
 		const newUser = new Users({
 			username,
 			email,
@@ -91,4 +125,29 @@ async function signup(req, res) {
 	}
 }
 
-export { login, signup };
+//creata a logout function also remove the refresh token from the database
+const logout = async (req, res) => {
+	try {
+		const { refreshToken } = req.body;
+
+		const { error } = await verifyRefreshToken(refreshToken);
+		if (error) {
+			return res.status(401).json({ message });
+		}
+
+		const userToken = await UserToken.findOne({ token: refreshToken });
+		if (!userToken)
+			return res
+				.status(200)
+				.json({ error: false, message: "Logged Out Sucessfully" });
+
+		await UserToken.findByIdAndDelete(userToken._id);
+		res.status(200).json({ error: false, message: "Logged Out Sucessfully" });
+	} catch (error) {
+		console.error("Logout error:", error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+	//but any how delete all token from frontend wherever it is store
+};
+
+export { login, signup, logout };
