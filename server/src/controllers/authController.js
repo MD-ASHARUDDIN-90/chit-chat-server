@@ -10,7 +10,8 @@ import {
 	createHashedPassword,
 } from "../utility/hashedPassword.js";
 import verifyRefreshToken from "../utility/verifyRefreshToken.js";
-
+import { getEmailTemplate } from "../const/emailTemplate.js"
+import { sendEmail } from "../utility/sendEmail.js"
 async function login(req, res) {
 	const { username, password } = req.body;
 
@@ -109,16 +110,19 @@ async function signup(req, res) {
 			profilePicture: url,
 		});
 
-		//OTP 4 digit create
-		// newUser.otp = Math.floor(1000 + Math.random() * 9000);
-		//expiry otp
-		// newUser.otp_expiry = Date.now() + 300000; // 5 minutes
+		newUser.otp = Math.floor(1000 + Math.random() * 9000);
+		newUser.otp_expiry = Date.now() + 300000; 
+       
 
-		//sendEmail
-		//template backtick OTP send email
-
-		await newUser.save();
-		res.status(201).json({ message: "User created successfully" });
+		try {
+			const {subject, text , html } =  getEmailTemplate(newUser.username, newUser.otp);
+			await sendEmail(newUser.email, subject, text, html);
+			await newUser.save();
+			res.status(201).json({ message: "User created successfully" });
+		} catch (err) {
+			console.error(err);
+			res.status(500).send("Error sending email");
+		}
 	} catch (error) {
 		console.error("Signup error:", error);
 		res.status(500).json({ message: "Internal server error" });
