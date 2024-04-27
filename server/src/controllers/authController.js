@@ -10,8 +10,8 @@ import {
 	createHashedPassword,
 } from "../utility/hashedPassword.js";
 import verifyRefreshToken from "../utility/verifyRefreshToken.js";
-import { getEmailTemplate } from "../const/emailTemplate.js"
-import { sendEmail } from "../utility/sendEmail.js"
+import { getEmailTemplate } from "../const/emailTemplate.js";
+import { sendEmail } from "../utility/sendEmail.js";
 async function login(req, res) {
 	const { username, password } = req.body;
 
@@ -77,54 +77,56 @@ async function login(req, res) {
 async function signup(req, res) {
 	try {
 		const { username, email, password } = req.body;
-		// console.log("file-->", req.file);
-		// console.log("body-->>", JSON.parse(JSON.stringify(req.body)));
 		if (!username || !email || !password) {
 			return res
 				.status(400)
 				.json({ message: "Username, email, and password are required" });
 		}
 
-		// Extract the path of the uploaded file.
 		const avatarLocalPath = req.file?.path;
-		// If the file is not found, throw an error.
 		if (!avatarLocalPath) {
 			return res.status(400).json({ message: "Profile picture is required" });
 		}
 
-		const url = await uploadToCloudinary(avatarLocalPath);
+		const cloudinaryResponse = await uploadToCloudinary(avatarLocalPath);
+		const { url, public_id } = cloudinaryResponse;
 
 		const existingUser = await Users.findOne({
 			$or: [{ username }, { email }],
 		});
 		if (existingUser) {
+			await deleteFromCloudinary(public_id);
 			return res
 				.status(409)
 				.json({ message: "Username or email already exists" });
 		}
+
 		const hashedPassword = await createHashedPassword(password);
 		const newUser = new Users({
 			username,
 			email,
 			password: hashedPassword,
 			profilePicture: url,
+			otp: Math.floor(1000 + Math.random() * 9000),
+			otp_expiry: Date.now() + 300000,
 		});
 
-		newUser.otp = Math.floor(1000 + Math.random() * 9000);
-		newUser.otp_expiry = Date.now() + 300000; 
-       
-
 		try {
-			const {subject, text , html } =  getEmailTemplate(newUser.username, newUser.otp);
+			const { subject, text, html } = getEmailTemplate(
+				newUser.username,
+				newUser.otp,
+			);
 			await sendEmail(newUser.email, subject, text, html);
 			await newUser.save();
 			res.status(201).json({ message: "User created successfully" });
 		} catch (err) {
 			console.error(err);
+			await deleteFromCloudinary(public_id);
 			res.status(500).send("Error sending email");
 		}
 	} catch (error) {
 		console.error("Signup error:", error);
+		await deleteFromCloudinary(public_id);
 		res.status(500).json({ message: "Internal server error" });
 	}
 }
