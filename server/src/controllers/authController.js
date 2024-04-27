@@ -10,6 +10,7 @@ import {
 	createHashedPassword,
 } from "../utility/hashedPassword.js";
 import verifyRefreshToken from "../utility/verifyRefreshToken.js";
+ 
 
 async function login(req, res) {
 	const { username, password } = req.body;
@@ -124,6 +125,27 @@ async function signup(req, res) {
 		res.status(500).json({ message: "Internal server error" });
 	}
 }
+const varifyOtp = async ({ body: { otp, _id } }, res) => {
+	if (!otp) return res.status(400).json({ message: "Otp is required" });
+
+	const userData = await Users.findById(_id);
+	if (!userData || userData.otp !== otp) {
+		return res.status(401).json({ message: "Wrong Otp" });
+	}
+
+	if (userData.otp_expiry < Date.now()) {
+		await Users.findByIdAndDelete(_id);
+		return res.status(401).json({ message: "Otp expired" });
+	}
+
+	userData.verified = true;
+	userData.otp = null;
+	userData.otp_expiry = null;
+	await userData.save();
+
+	res.json({ message: "Otp verified successfully" });
+};
+
 
 //creata a logout function also remove the refresh token from the database
 const logout = async (req, res) => {
@@ -150,4 +172,4 @@ const logout = async (req, res) => {
 	//but any how delete all token from frontend wherever it is store
 };
 
-export { login, signup, logout };
+export { login, signup, varifyOtp, logout };
