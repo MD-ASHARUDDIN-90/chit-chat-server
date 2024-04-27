@@ -22,11 +22,31 @@ export async function uploadToCloudinary(localFilePath) {
 
 		console.log("File uploaded successfully", response);
 		fs.unlinkSync(localFilePath);
-		return response.url;
+		return response;
 	} catch (error) {
 		fs.unlinkSync(localFilePath);
 		//remove file from server if upload fails
 		console.error("Error uploading file:", error);
 		return null;
+	}
+}
+
+export async function deleteFromCloudinary(publicId) {
+	try {
+		if (!publicId) {
+			throw new Error("Public ID not provided");
+		}
+		const result = await cloudinary.uploader.destroy(publicId);
+		console.log("Result from Cloudinary:", result);
+
+		if (result.result === "ok") {
+			console.log("File deleted successfully");
+		} else {
+			console.error("Failed to delete file. Cloudinary response:", result);
+			throw new Error("Failed to delete file");
+		}
+	} catch (error) {
+		console.error("Error deleting file:", error);
+		throw error;
 	}
 }

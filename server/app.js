@@ -6,8 +6,11 @@ import message from "./src/routes/messageRoutes.js";
 import connectDB from "./src/db/db.js";
 import { config as dotenvConfig } from "dotenv";
 import { sendEmail } from "./src/utility/sendEmail.js";
-import { upload } from "./src/middleware/multerMiddleware.js";
-import { uploadToCloudinary } from "./src/utility/cloudinary.js";
+import { uploadMiddleware } from "./src/middleware/multerMiddleware.js";
+import {
+	deleteFromCloudinary,
+	uploadToCloudinary,
+} from "./src/utility/cloudinary.js";
 
 dotenvConfig();
 
@@ -59,7 +62,7 @@ app.post("/send-email", async (req, res) => {
 // @param {string} req.file.path - The path of the uploaded file.
 // @param {Object} res - The response object.
 // @return {string} The URL of the uploaded file.
-app.post("/upload", upload.single("avatar"), async (req, res) => {
+app.post("/upload", uploadMiddleware, async (req, res) => {
 	console.log(req.file);
 	// Extract the path of the uploaded file.
 	const avatarLocalPath = req.file?.path;
@@ -77,6 +80,18 @@ app.post("/upload", upload.single("avatar"), async (req, res) => {
 		// Log the error and send a 500 status code.
 		console.error(error);
 		res.status(500).send("Error uploading file");
+	}
+});
+
+//delete file from cloudinary
+app.delete("/delete", async (req, res) => {
+	try {
+		const { url } = req.body;
+		await deleteFromCloudinary(url);
+		res.status(200).send("File deleted successfully");
+	} catch (error) {
+		console.error(error);
+		res.status(500).send("Error deleting file");
 	}
 });
 
