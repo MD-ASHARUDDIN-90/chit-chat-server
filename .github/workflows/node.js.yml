@@ -28,5 +28,5 @@ jobs:
     - run: npm ci
     - run: |
        touch .env
-       echo "${{ secrets.PROD_ENF_FILE }}" > .env
+       echo "${{ secrets.PROD_ENV_FILE }}" > .env
     - run: pm2 start BackendAPI
