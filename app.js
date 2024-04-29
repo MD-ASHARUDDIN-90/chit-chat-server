@@ -28,6 +28,10 @@ app.use(express.static("public"));
 app.use("/api/auth", authRoutes);
 app.use("/api/message", message);
 app.use("/api/refresh-token", refreshToken);
+app.get("/api/check", (req, res) => {
+	console.log(" Hi I am ChitChat Backend Server and Working");
+	res.status(200).send("Hi I am ChitChat Backend Server and Working");
+});
 
 //temporary routes
 /*
