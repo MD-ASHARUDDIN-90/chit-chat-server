@@ -104,7 +104,11 @@ app.delete("/delete", async (req, res) => {
 //error handling
 app.use((err, req, res, next) => {
 	console.error(err.stack);
-	res.status(500).send("Something broke!");
+
+	const statusCode = err.statusCode ?? 500;
+	const errorMessage = err.message ?? "Internal Server Error";
+
+	res.status(statusCode).send(errorMessage);
 });
 
 //connect to database
