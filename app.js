@@ -11,6 +11,7 @@ import {
 	deleteFromCloudinary,
 	uploadToCloudinary,
 } from "./src/utility/cloudinary.js";
+import { useMorgan } from "./src/utility/serverHelper.js";
 
 dotenvConfig();
 
@@ -19,6 +20,7 @@ const app = express();
 const port = process.env.PORT || 8080;
 
 //middleware
+useMorgan(app); //logs requests
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
