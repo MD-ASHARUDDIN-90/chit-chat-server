@@ -20,14 +20,10 @@ router.get("/", async (req, res) => {
 			refreshToken,
 		);
 
-		console.log("tokenDetails", tokenDetails);
-		console.log("error", error);
-		console.log("message", message);
 		if (error) {
 			return res.status(401).json({ message });
 		}
 		// If valid, generate a new access token and refresh token
-		console.log("tokenDetails.userId", tokenDetails.id);
 		const accessToken = generateToken(tokenDetails.id);
 		const newRefreshToken = generateRefreshToken(tokenDetails.id);
 

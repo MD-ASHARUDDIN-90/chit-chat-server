@@ -69,7 +69,6 @@ app.post("/send-email", async (req, res) => {
 // @param {Object} res - The response object.
 // @return {string} The URL of the uploaded file.
 app.post("/upload", uploadMiddleware, async (req, res) => {
-	console.log(req.file);
 	// Extract the path of the uploaded file.
 	const avatarLocalPath = req.file?.path;
 

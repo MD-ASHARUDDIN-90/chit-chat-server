@@ -20,7 +20,6 @@ export async function uploadToCloudinary(localFilePath) {
 			folder: "chit-chat",
 		});
 
-		console.log("File uploaded successfully", response);
 		fs.unlinkSync(localFilePath);
 		return response;
 	} catch (error) {
@@ -37,7 +36,6 @@ export async function deleteFromCloudinary(publicId) {
 			throw new Error("Public ID not provided");
 		}
 		const result = await cloudinary.uploader.destroy(publicId);
-		console.log("Result from Cloudinary:", result);
 
 		if (result.result === "ok") {
 			console.log("File deleted successfully");
