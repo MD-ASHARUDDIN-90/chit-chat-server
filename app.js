@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./src/routes/authRoutes.js";
+import userRoutes from "./src/routes/userRoutes.js";
 import refreshToken from "./src/routes/refreshTokenRoutes.js";
 import message from "./src/routes/messageRoutes.js";
 import connectDB from "./src/db/db.js";
@@ -12,6 +13,7 @@ import {
 	uploadToCloudinary,
 } from "./src/utility/cloudinary.js";
 import { useMorgan } from "./src/utility/serverHelper.js";
+import { authMiddleware } from "./src/middleware/authMiddleware.js";
 
 dotenvConfig();
 
@@ -29,6 +31,7 @@ app.use(express.static("public"));
 //routes
 app.use("/api/auth", authRoutes);
 app.use("/api/message", message);
+app.use("/api/user", authMiddleware, userRoutes);
 app.use("/api/refresh-token", refreshToken);
 app.get("/api/check", (req, res) => {
 	console.log(" Hi I am ChitChat Backend Server and Working");

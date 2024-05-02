@@ -33,7 +33,7 @@ router.get("/", async (req, res) => {
 		doc.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
 		await doc.save();
-		res.json({ accessToken, refreshToken: newRefreshToken });
+		res.status(200).json({ accessToken, refreshToken: newRefreshToken });
 	} catch (error) {
 		console.error("Refresh token error:", error);
 		res.status(500).json({ message: "Internal server error" });
