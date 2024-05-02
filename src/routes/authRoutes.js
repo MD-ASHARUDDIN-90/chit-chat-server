@@ -5,11 +5,11 @@ import {
 	login,
 	logout,
 	signup,
-	varifyOtp,
+	verifyOtp,
 } from "../controllers/authController.js";
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/signup", uploadMiddleware, signup);
-router.post("/varify-otp", varifyOtp);
+router.post("/verify-otp", verifyOtp);
 
 export default router;

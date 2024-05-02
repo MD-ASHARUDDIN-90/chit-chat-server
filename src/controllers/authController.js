@@ -1,6 +1,9 @@
 import Users from "../models/userModel.js";
 import UserToken from "../models/userTokenModel.js";
-import { uploadToCloudinary } from "../utility/cloudinary.js";
+import {
+	deleteFromCloudinary,
+	uploadToCloudinary,
+} from "../utility/cloudinary.js";
 import {
 	generateRefreshToken,
 	generateToken,
@@ -77,6 +80,8 @@ async function login(req, res) {
 async function signup(req, res) {
 	try {
 		const { username, email, password } = req.body;
+		console.log(req.file);
+		console.log(username, email, password);
 		if (!username || !email || !password) {
 			return res
 				.status(400)
@@ -108,7 +113,7 @@ async function signup(req, res) {
 			password: hashedPassword,
 			profilePicture: url,
 			otp: Math.floor(1000 + Math.random() * 9000),
-			otp_expiry: Date.now() + 300000,
+			otp_expiry: Date.now() + 10 * 60 * 1000, // 10 minutes
 		});
 
 		try {
@@ -117,8 +122,10 @@ async function signup(req, res) {
 				newUser.otp,
 			);
 			await sendEmail(newUser.email, subject, text, html);
-			await newUser.save();
-			res.status(201).json({ message: "User created successfully" });
+			const savedUser = await newUser.save();
+			res
+				.status(201)
+				.json({ message: "User created successfully", data: savedUser });
 		} catch (err) {
 			console.error(err);
 			await deleteFromCloudinary(public_id);
@@ -130,16 +137,22 @@ async function signup(req, res) {
 		res.status(500).json({ message: "Internal server error" });
 	}
 }
-const varifyOtp = async ({ body: { otp, _id } }, res) => {
+const verifyOtp = async ({ body: { otp, _id } }, res) => {
+	console.log(otp, _id);
 	if (!otp) return res.status(400).json({ message: "Otp is required" });
 
 	const userData = await Users.findById(_id);
-	if (!userData || userData.otp !== otp) {
+	console.log("userData", userData);
+	if (!userData || userData.otp != otp) {
 		return res.status(401).json({ message: "Wrong Otp" });
 	}
 
 	if (userData.otp_expiry < Date.now()) {
 		await Users.findByIdAndDelete(_id);
+		const parts = profilePicture.split("/");
+		const public_id =
+			parts[parts.length - 2] + "/" + parts[parts.length - 1].split(".")[0];
+		await deleteFromCloudinary(public_id);
 		return res.status(401).json({ message: "Otp expired" });
 	}
 
@@ -176,4 +189,4 @@ const logout = async (req, res) => {
 	//but any how delete all token from frontend wherever it is store
 };
 
-export { login, signup, varifyOtp, logout };
+export { login, signup, verifyOtp, logout };
