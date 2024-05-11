@@ -1,18 +1,10 @@
 import express from "express";
-import Users from "../models/userModel.js";
+import { getUserData, updateUserData } from "../controllers/userController.js";
+import { uploadMiddleware } from "../middleware/multerMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", async (req, res) => {
-	//temporary route
-	try {
-		const { id } = req.user;
-		const user = await Users.findById(id).select("-password -otp -otp_expiry");
-		console.log(user);
-		res.status(200).json(user);
-	} catch (error) {
-		res.status(500).json({ message: "Internal server error" });
-	}
-});
+router.get("/", getUserData);
+router.put("/update", uploadMiddleware, updateUserData);
 
 export default router;
