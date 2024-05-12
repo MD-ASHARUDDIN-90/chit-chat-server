@@ -30,4 +30,40 @@ async function createPost(req, res) {
 	}
 }
 
-export { createPost };
+async function getAllPosts(req, res) {
+	try {
+		const { id } = req.user;
+		console.log("id", id);
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const posts = await Posts.find()
+			.populate("author")
+			.select("-password -otp -otp_expiry");
+		if (!posts) {
+			return res.status(404).json({ message: "No posts found" });
+		}
+		res.status(200).json(posts);
+	} catch (error) {
+		console.error(error);
+		if (error.name === "CastError") {
+			return res.status(400).json({ message: "Invalid request body" });
+		}
+		if (error.name === "ValidationError") {
+			return res.status(400).json({ message: "Invalid request body" });
+		}
+		if (error.name === "MissingSchemaError") {
+			return res
+				.status(500)
+				.json({
+					message:
+						"Internal server error: Schema hasn't been registered for model User",
+				});
+		}
+		return res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+export { createPost, getAllPosts };

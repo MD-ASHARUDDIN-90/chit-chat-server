@@ -1,4 +1,4 @@
-import Users from "../models/userModel.js";
+import User from "../models/userModel.js";
 import { uploadToCloudinary } from "../utility/cloudinary.js";
 import {
 	comparePassword,
@@ -8,7 +8,7 @@ import {
 async function getUserData(req, res) {
 	try {
 		const { id } = req.user;
-		const user = await Users.findById(id).select("-password -otp -otp_expiry");
+		const user = await User.findById(id).select("-password -otp -otp_expiry");
 		res.status(200).json(user);
 	} catch (error) {
 		res.status(500).json({ message: "Internal server error" });
@@ -29,7 +29,7 @@ async function updateUserData(req, res) {
 			req.body.profilePicture = url;
 		}
 
-		const user = await Users.findByIdAndUpdate(id, req.body, {
+		const user = await User.findByIdAndUpdate(id, req.body, {
 			new: true,
 		}).select("-password -otp -otp_expiry");
 		console.log("user", user);
@@ -42,7 +42,7 @@ async function updateUserData(req, res) {
 async function updateUserPassword(req, res) {
 	try {
 		const { id } = req.user;
-		const user = await Users.findById(id);
+		const user = await User.findById(id);
 
 		const { currentPassword, newPassword, confirmNewPassword } = req.body;
 
