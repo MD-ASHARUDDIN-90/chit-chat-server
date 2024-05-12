@@ -1,4 +1,4 @@
-import Users from "../models/userModel.js";
+import User from "../models/userModel.js";
 import UserToken from "../models/userTokenModel.js";
 import {
 	deleteFromCloudinary,
@@ -25,7 +25,7 @@ async function login(req, res) {
 	}
 
 	try {
-		const user = await Users.findOne({ username });
+		const user = await User.findOne({ username });
 
 		if (!user) {
 			return res.status(401).json({ message: "Invalid username or password" });
@@ -97,7 +97,7 @@ async function signup(req, res) {
 		const cloudinaryResponse = await uploadToCloudinary(avatarLocalPath);
 		const { url, public_id } = cloudinaryResponse;
 
-		const existingUser = await Users.findOne({
+		const existingUser = await User.findOne({
 			$or: [{ username }, { email }],
 		});
 		if (existingUser) {
@@ -108,7 +108,7 @@ async function signup(req, res) {
 		}
 
 		const hashedPassword = await createHashedPassword(password);
-		const newUser = new Users({
+		const newUser = new User({
 			username,
 			email,
 			password: hashedPassword,
@@ -142,14 +142,14 @@ const verifyOtp = async ({ body: { otp, _id } }, res) => {
 	console.log(otp, _id);
 	if (!otp) return res.status(400).json({ message: "Otp is required" });
 
-	const userData = await Users.findById(_id);
+	const userData = await User.findById(_id);
 	console.log("userData", userData);
 	if (!userData || userData.otp != otp) {
 		return res.status(401).json({ message: "Wrong Otp" });
 	}
 
 	if (userData.otp_expiry < Date.now()) {
-		await Users.findByIdAndDelete(_id);
+		await User.findByIdAndDelete(_id);
 		const parts = profilePicture.split("/");
 		const public_id =
 			parts[parts.length - 2] + "/" + parts[parts.length - 1].split(".")[0];
