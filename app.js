@@ -113,7 +113,7 @@ app.use((err, req, res, next) => {
 	res.status(statusCode).send(errorMessage);
 });
 
-//connect to database
+//connect to mongodb database
 connectDB()
 	.then(() => {
 		app.listen(port, () => {
