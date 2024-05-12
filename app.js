@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import authRoutes from "./src/routes/authRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
+import postRoutes from "./src/routes/postRoutes.js";
 import refreshToken from "./src/routes/refreshTokenRoutes.js";
 import message from "./src/routes/messageRoutes.js";
 import connectDB from "./src/db/db.js";
@@ -32,6 +33,7 @@ app.use(express.static("public"));
 app.use("/api/auth", authRoutes);
 app.use("/api/message", message);
 app.use("/api/user", authMiddleware, userRoutes);
+app.use("/api/post", authMiddleware, postRoutes);
 app.use("/api/refresh-token", refreshToken);
 app.get("/api/check", (req, res) => {
 	console.log(" Hi I am ChitChat Backend Server and Working");
