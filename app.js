@@ -23,7 +23,19 @@ const port = process.env.PORT || 8080;
 
 //middleware
 useMorgan(app); //logs requests
-app.use(cors());
+const allowedOrigins = [
+	process.env.CLIENT_DOMAIN || "https://chit-chat-client-fawn.vercel.app",
+];
+app.use(
+	cors({
+		origin: (origin, callback) => {
+			if (allowedOrigins.includes(origin)) {
+				return callback(null, true);
+			}
+			return callback(new Error("Not allowed by CORS"));
+		},
+	}),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
