@@ -41,7 +41,8 @@ async function getAllPosts(req, res) {
 
 		const posts = await Posts.find()
 			.populate("author")
-			.select("-password -otp -otp_expiry");
+			.select("-password -otp -otp_expiry")
+			.sort({ createdAt: -1 });
 		if (!posts) {
 			return res.status(404).json({ message: "No posts found" });
 		}
@@ -55,12 +56,10 @@ async function getAllPosts(req, res) {
 			return res.status(400).json({ message: "Invalid request body" });
 		}
 		if (error.name === "MissingSchemaError") {
-			return res
-				.status(500)
-				.json({
-					message:
-						"Internal server error: Schema hasn't been registered for model User",
-				});
+			return res.status(500).json({
+				message:
+					"Internal server error: Schema hasn't been registered for model User",
+			});
 		}
 		return res.status(500).json({ message: "Internal server error" });
 	}
