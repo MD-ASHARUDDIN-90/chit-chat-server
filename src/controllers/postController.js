@@ -53,8 +53,11 @@ async function getAllPosts(req, res) {
 		}
 
 		const posts = await Posts.find()
-			.populate("author")
-			.select("-password -otp -otp_expiry")
+			.populate({
+				path: "author",
+				select: "-password -otp -otp_expiry",
+			})
+
 			.sort({ createdAt: -1 });
 		if (!posts) {
 			return res.status(404).json({ message: "No posts found" });
@@ -78,4 +81,29 @@ async function getAllPosts(req, res) {
 	}
 }
 
-export { createPost, getAllPosts };
+async function getPostById(req, res) {
+	try {
+		const { id } = req.params;
+		const post = await Posts.findById(id)
+			.populate({
+				path: "author",
+				select: "-password -otp -otp_expiry",
+			})
+			.populate({
+				path: "comments",
+				populate: {
+					path: "author",
+					select: "-password -otp -otp_expiry",
+				},
+				options: { sort: { createdAt: -1 } },
+			});
+		if (!post) {
+			return res.status(404).json({ message: "Post not found" });
+		}
+		res.status(200).json(post);
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+export { createPost, getAllPosts, getPostById };
