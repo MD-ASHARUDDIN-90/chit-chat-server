@@ -1,4 +1,7 @@
-import { uploadToCloudinary } from "../utility/cloudinary.js";
+import {
+	deleteFromCloudinary,
+	uploadToCloudinary,
+} from "../utility/cloudinary.js";
 import Posts from "../models/postModel.js";
 
 async function createPost(req, res) {
@@ -10,12 +13,22 @@ async function createPost(req, res) {
 
 		if (avatarLocalPath) {
 			const cloudinaryResponse = await uploadToCloudinary(avatarLocalPath);
-			const { url } = cloudinaryResponse;
+			const { url, public_id } = cloudinaryResponse;
 			console.log("url", url);
 			req.body.image = url;
+			req.body.image_id = public_id;
 		}
 
-		const { description, image } = req.body;
+		const { description, image, image_id } = req.body;
+		//if description or image is not provided then send error but if both are proven then proceed to create post
+		// it means atleast one of them is required
+		if (!description && !image) {
+			//delete image from cloudinary if it was uploaded
+			if (image_id) await deleteFromCloudinary(image_id);
+			return res
+				.status(400)
+				.json({ message: "Description or image is required" });
+		}
 
 		const newPost = new Posts({
 			description,
