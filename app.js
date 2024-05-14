@@ -1,3 +1,10 @@
+/**
+ * @module app
+ * @description Main entry point for the ChitChat backend server.
+ * @summary ChitChat Backend Server with REST API and routes like authentication, user, post, comment and message.
+ * @author [Ashar](https://github.com/MD-ASHARUDDIN-90)
+ */
+
 import express from "express";
 import cors from "cors";
 import authRoutes from "./src/routes/authRoutes.js";
@@ -42,7 +49,6 @@ app.get("/api/check", (req, res) => {
 	res.status(200).send("Hi I am ChitChat Backend Server and Working");
 });
 
-//temporary routes
 /*
  * Route to check if the mail is up and running.
  * Route to send an email.
@@ -56,7 +62,6 @@ app.get("/api/check", (req, res) => {
  * @param {Object} res - The response object.
  * @return {string} The response indicating whether the email was sent successfully or not.
  */
-
 app.post("/send-email", async (req, res) => {
 	try {
 		const { email, subject, text, html } = req.body;
@@ -68,13 +73,19 @@ app.post("/send-email", async (req, res) => {
 	}
 });
 
-// Route to upload a file to cloudinary.
-//
-// @param {Object} req - The request object.
-// @param {Object} req.file - The uploaded file.
-// @param {string} req.file.path - The path of the uploaded file.
-// @param {Object} res - The response object.
-// @return {string} The URL of the uploaded file.
+/**
+ * Route for uploading a file.
+ * Testing purposes only.
+ * @name /upload
+ * @function
+ * @param  req - The request object.
+ * @param  res - The response object.
+ * @param {Object} req - The request object.
+ * @param {Object} req.file - The uploaded file.
+ * @param {string} req.file.path - The path of the uploaded file.
+ * @param {Object} res - The response object.
+ * @return {string} The URL of the uploaded file.
+ */
 app.post("/upload", uploadMiddleware, async (req, res) => {
 	// Extract the path of the uploaded file.
 	const avatarLocalPath = req.file?.path;
@@ -95,7 +106,14 @@ app.post("/upload", uploadMiddleware, async (req, res) => {
 	}
 });
 
-//delete file from cloudinary
+/**
+ * Route for deleting a file from Cloudinary.
+ * Testing purposes only.
+ * @name /delete
+ * @function
+ * @param  req - The request object.
+ * @param  res - The response object.
+ */
 app.delete("/delete", async (req, res) => {
 	try {
 		const { url } = req.body;
@@ -117,7 +135,10 @@ app.use((err, req, res, next) => {
 	res.status(statusCode).send(errorMessage);
 });
 
-//connect to mongodb database
+/**
+ * Function to connect to the database and start the server.
+ * @function connectDB
+ */
 connectDB()
 	.then(() => {
 		app.listen(port, () => {
