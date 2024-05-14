@@ -1,9 +1,12 @@
 import User from "../models/userModel.js";
+import Posts from "../models/postModel.js";
 import { uploadToCloudinary } from "../utility/cloudinary.js";
 import {
 	comparePassword,
 	createHashedPassword,
 } from "../utility/hashedPassword.js";
+import { buildQueryObject } from "../utility/dbQueryHelper.js";
+import { getPaginatedResults } from "../utility/getPaginatedResult.js";
 
 async function getUserData(req, res) {
 	try {
@@ -65,4 +68,39 @@ async function updateUserPassword(req, res) {
 	}
 }
 
-export { getUserData, updateUserData, updateUserPassword };
+async function getMyPosts(req, res) {
+	try {
+		const { id } = req.user;
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const { page, limit, filterObject } = buildQueryObject(req);
+
+		filterObject.author = id; //add filter for author
+
+		const populateOptions = [
+			{
+				path: "author",
+				select: "-password -otp -otp_expiry",
+			},
+		];
+
+		const selectFields = ""; // Add the fields you want to select from the Posts model
+
+		const posts = await getPaginatedResults(
+			Posts,
+			filterObject,
+			page,
+			limit,
+			populateOptions,
+			selectFields,
+		);
+
+		res.status(200).json(posts);
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+export { getUserData, updateUserData, updateUserPassword, getMyPosts };

@@ -1,3 +1,15 @@
+/**
+ * @module postController
+ * @description Controller for posts
+ * @summary Controller for posts handling requests and responses
+ * @class postController
+ * @classdesc Controller for posts
+ * @exports postController
+ *
+ * @author [Ashar](https://github.com/MD-ASHARUDDIN-90)
+ *
+ */
+
 import {
 	deleteFromCloudinary,
 	uploadToCloudinary,
@@ -6,17 +18,6 @@ import Posts from "../models/postModel.js";
 import Comment from "../models/commentModel.js";
 import { buildQueryObject } from "../utility/dbQueryHelper.js";
 import { getPaginatedResults } from "../utility/getPaginatedResult.js";
-
-/**
- * @module postController
- * @class postController
- * @classdesc Controller for posts
- * @exports postController
- * 
- * @author [Ashar](https://github.com/MD-ASHARUDDIN-90)
- * 
- * /
-
 
 /**
  * Async function to create a new post based on the request body data.
