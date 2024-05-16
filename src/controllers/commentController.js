@@ -4,6 +4,8 @@ import {
 	deleteFromCloudinary,
 	uploadToCloudinary,
 } from "../utility/cloudinary.js";
+import { buildQueryObject } from "../utility/dbQueryHelper.js";
+import { getPaginatedResults } from "../utility/getPaginatedResult.js";
 
 async function createComment(req, res) {
 	try {
@@ -49,4 +51,45 @@ async function createComment(req, res) {
 	}
 }
 
-export { createComment };
+async function getAllCommentsByPost(req, res) {
+	try {
+		const { id } = req.user;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const { page, limit, filterObject } = buildQueryObject(req);
+
+		const populateOptions = [
+			{
+				path: "author",
+				select: "-password -otp -otp_expiry",
+			},
+			// Add more paths to populate as needed
+		];
+
+		const selectFields = ""; // Add the fields you want to select from the Posts model
+
+		const comments = await getPaginatedResults(
+			Comment,
+			filterObject,
+			page,
+			limit,
+			populateOptions,
+			selectFields,
+		);
+
+		// console.log("posts --->>", posts);
+
+		if (!comments) {
+			return res.status(404).json({ message: "No comments found" });
+		}
+		res.status(200).json(comments);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+export { createComment, getAllCommentsByPost };

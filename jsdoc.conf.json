@@ -1,0 +1,13 @@
+{
+	"source": {
+		"include": ["app.js", "src"],
+		"exclude": ["node_modules"]
+	},
+	"opts": {
+		"destination": "./doc"
+	},
+	"templates": {
+		"cleverLinks": true,
+		"monospaceLinks": true
+	}
+}

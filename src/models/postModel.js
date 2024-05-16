@@ -31,4 +31,7 @@ const postSchema = new mongoose.Schema({
 	},
 });
 
+// Create a text index on the title, description, and tags fields for full-text search
+postSchema.index({ title: "text", description: "text", tags: "text" });
+
 export default mongoose.model("Posts", postSchema);
