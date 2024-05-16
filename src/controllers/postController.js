@@ -133,32 +133,32 @@ async function getPostById(req, res) {
 			select: "-password -otp -otp_expiry",
 		});
 
-		console.log("post", post);
+		// console.log("post", post);
 
 		if (!post) {
 			return res.status(404).json({ message: "Post not found" });
 		}
 
 		// Get paginated comments
-		const paginatedComments = await getPaginatedResults(
-			Comment, // Assuming Comment is your comment model
-			{ _id: { $in: post.comments } }, // Filter comments that are in post.comments
-			page,
-			limit,
-			[
-				{
-					// Populate author in each comment
-					path: "author",
-					select: "-password -otp -otp_expiry",
-				},
-			],
-		);
+		// const paginatedComments = await getPaginatedResults(
+		// 	Comment, // Assuming Comment is your comment model
+		// 	{ _id: { $in: post.comments } }, // Filter comments that are in post.comments
+		// 	page,
+		// 	limit,
+		// 	[
+		// 		{
+		// 			// Populate author in each comment
+		// 			path: "author",
+		// 			select: "-password -otp -otp_expiry",
+		// 		},
+		// 	],
+		// );
 
-		// Add paginated comments to the post object format expected by the frontend
-		post.comments = paginatedComments.data;
-		paginatedComments.data = post;
+		// // Add paginated comments to the post object format expected by the frontend
+		// post.comments = paginatedComments.data;
+		// paginatedComments.data = post;
 
-		res.status(200).json(paginatedComments);
+		res.status(200).json(post);
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Internal server error" });
