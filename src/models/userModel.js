@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
 		default:
 			"https://res.cloudinary.com/dmgyhxdck/image/upload/v1714072221/chit-chat/foszghw3jpppl1sw2rb4.png",
 	},
+	displayPicture: {
+		type: String,
+		default: "",
+	},
 	country: {
 		type: String || null,
 	},

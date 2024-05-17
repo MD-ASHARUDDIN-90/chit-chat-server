@@ -103,4 +103,33 @@ async function getMyPosts(req, res) {
 	}
 }
 
-export { getUserData, updateUserData, updateUserPassword, getMyPosts };
+async function updateDisplayPicture(req, res) {
+	try {
+		const { id } = req.user;
+		const avatarLocalPath = req.file?.path;
+		console.log("avatarLocalPath", avatarLocalPath);
+
+		if (avatarLocalPath) {
+			const cloudinaryResponse = await uploadToCloudinary(avatarLocalPath);
+			const { url, public_id } = cloudinaryResponse;
+			console.log("url", url);
+			req.body.displayPicture = url;
+		}
+
+		const user = await User.findByIdAndUpdate(id, req.body, {
+			new: true,
+		}).select("-password -otp -otp_expiry");
+		console.log("user", user);
+		res.status(200).json(user);
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+export {
+	getUserData,
+	updateUserData,
+	updateUserPassword,
+	getMyPosts,
+	updateDisplayPicture,
+};
