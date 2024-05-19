@@ -38,11 +38,16 @@ const setupSocketIO = (server) => {
 		// Update the user's socketId in the database
 		await User.findByIdAndUpdate(user.id, { socketId: socket.id });
 
+		socket.on("joinPost", (postId) => {
+			socket.join(postId);
+			console.log(`User ${user.id} joined post room: ${postId}`);
+		});
+
 		socket.on("disconnect", async () => {
 			// Remove the user's socketId from the database
 			console.log(
 				"User socket disconnected: ",
-				user.username,
+				user._id,
 				"socketID",
 				socket.id,
 			);
