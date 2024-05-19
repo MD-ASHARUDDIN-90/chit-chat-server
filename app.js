@@ -24,7 +24,7 @@ import {
 } from "./src/utility/cloudinary.js";
 import { useMorgan } from "./src/utility/serverHelper.js";
 import { authMiddleware } from "./src/middleware/authMiddleware.js";
-import setupSocketIO from "./src/utility/socket.js";
+import { setupSocketIO } from "./src/utility/socket.js";
 
 dotenvConfig();
 

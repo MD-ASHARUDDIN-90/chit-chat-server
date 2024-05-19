@@ -18,6 +18,7 @@ import Posts from "../models/postModel.js";
 import Comment from "../models/commentModel.js";
 import { buildQueryObject } from "../utility/dbQueryHelper.js";
 import { getPaginatedResults } from "../utility/getPaginatedResult.js";
+import { io } from "../utility/socket.js";
 
 /**
  * Async function to create a new post based on the request body data.
@@ -27,6 +28,7 @@ import { getPaginatedResults } from "../utility/getPaginatedResult.js";
  * @return {Object} The saved post data or an error message.
  */
 async function createPost(req, res) {
+	// console.log("createPost IO", io);
 	try {
 		const { id } = req.user;
 
@@ -59,6 +61,10 @@ async function createPost(req, res) {
 		});
 
 		const savedPost = await newPost.save();
+		await savedPost.populate("author", "-password -otp -otp_expiry");
+
+		// Emit event to all connected clients
+		io.emit("newPost", savedPost);
 		res.status(200).json(savedPost);
 	} catch (error) {
 		res.status(500).json({ message: "Internal server error" });
