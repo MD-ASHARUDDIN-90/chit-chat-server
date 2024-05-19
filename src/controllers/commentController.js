@@ -6,6 +6,7 @@ import {
 } from "../utility/cloudinary.js";
 import { buildQueryObject } from "../utility/dbQueryHelper.js";
 import { getPaginatedResults } from "../utility/getPaginatedResult.js";
+import { io } from "../utility/socket.js";
 
 async function createComment(req, res) {
 	try {
@@ -39,11 +40,15 @@ async function createComment(req, res) {
 		});
 
 		const savedComment = await newComment.save();
+		await savedComment.populate("author", "-password -otp -otp_expiry");
 
 		//upon successful comment creation, update the post comment count and push the comment id to the comments array
 		const post = await Post.findById(postId);
 		post.comments.push(savedComment._id);
 		await post.save();
+
+		// Emit event for new comment
+		io.to(postId).emit("newComment", savedComment);
 
 		res.status(200).json(savedComment);
 	} catch (error) {
