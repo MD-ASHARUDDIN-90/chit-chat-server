@@ -3,8 +3,10 @@ import { Server as SocketIOServer } from "socket.io";
 import User from "../models/userModel.js"; // Adjust the path as needed
 import { verifyToken } from "../middleware/authMiddleware.js";
 
+let io;
+
 const setupSocketIO = (server) => {
-	const io = new SocketIOServer(server, {
+	io = new SocketIOServer(server, {
 		cors: {
 			origin: "*", // Update this with your client URL
 			methods: ["GET", "POST", "PUT", "DELETE"],
@@ -53,4 +55,4 @@ const setupSocketIO = (server) => {
 	return io;
 };
 
-export default setupSocketIO;
+export { setupSocketIO, io };
