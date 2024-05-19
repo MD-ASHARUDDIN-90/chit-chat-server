@@ -6,6 +6,7 @@
  */
 
 import express from "express";
+import http from "http";
 import cors from "cors";
 import authRoutes from "./src/routes/authRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
@@ -23,10 +24,12 @@ import {
 } from "./src/utility/cloudinary.js";
 import { useMorgan } from "./src/utility/serverHelper.js";
 import { authMiddleware } from "./src/middleware/authMiddleware.js";
+import setupSocketIO from "./src/utility/socket.js";
 
 dotenvConfig();
 
 const app = express();
+const server = http.createServer(app);
 
 const port = process.env.PORT || 8080;
 
@@ -135,13 +138,16 @@ app.use((err, req, res, next) => {
 	res.status(statusCode).send(errorMessage);
 });
 
+// Setup Socket.IO
+setupSocketIO(server);
+
 /**
  * Function to connect to the database and start the server.
  * @function connectDB
  */
 connectDB()
 	.then(() => {
-		app.listen(port, () => {
+		server.listen(port, () => {
 			console.log(`⚙️  Server is running on port:  ${port}`);
 		});
 	})
