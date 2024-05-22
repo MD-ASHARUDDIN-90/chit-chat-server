@@ -5,10 +5,12 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 
 let io;
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const setupSocketIO = (server) => {
 	io = new SocketIOServer(server, {
 		cors: {
-			origin: "*", // Update this with your client URL
+			origin: isProduction ? "https://chit-chat-client-fawn.vercel.app/" : "*", // Update this with your client URL
 			methods: ["GET", "POST", "PUT", "DELETE"],
 		},
 	});
