@@ -5,8 +5,6 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 
 let io;
 
-const isProduction = process.env.NODE_ENV === "production";
-
 const setupSocketIO = (server) => {
 	io = new SocketIOServer(server, {
 		cors: {
