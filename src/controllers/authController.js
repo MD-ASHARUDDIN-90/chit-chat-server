@@ -190,4 +190,48 @@ const logout = async (req, res) => {
 	//but any how delete all token from frontend wherever it is store
 };
 
-export { login, signup, verifyOtp, logout };
+async function findMyAccount(req, res) {
+	const { emailOrUsername } = req.body;
+	try {
+		const user = await User.findOne({
+			$or: [{ username: emailOrUsername }, { email: emailOrUsername }],
+		});
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+		res
+			.status(200)
+			.json({ message: "User found successfully", data: user._id });
+	} catch (error) {
+		console.error("Find my account error:", error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+async function resetPassword(req, res) {
+	const { _id, newPassword, confirmNewPassword } = req.body;
+	try {
+		const user = await User.findById(_id);
+		if (!user) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		if (newPassword !== confirmNewPassword) {
+			return res.status(400).json({
+				message: "New password and confirm new password do not match",
+			});
+		}
+
+		const hashedPassword = await createHashedPassword(newPassword);
+		user.password = hashedPassword;
+
+		// Send email to user with password reset link //wil do this in future
+		await user.save();
+		res.status(200).json({ message: "Password reset successfully" });
+	} catch (error) {
+		console.error("Reset password error:", error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+export { login, signup, verifyOtp, logout, findMyAccount, resetPassword };
