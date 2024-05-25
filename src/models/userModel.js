@@ -52,6 +52,18 @@ const userSchema = new mongoose.Schema({
 		type: Date,
 		default: Date.now,
 	},
+	// New fields for following, followers, and friend requests
+	following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+	followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+	friendRequestsSent: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+	friendRequestsReceived: [
+		{ type: mongoose.Schema.Types.ObjectId, ref: "User" },
+	],
+	friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+	removedSuggestions: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
+
+// Create a text index on the title, description, and tags fields for full-text search
+userSchema.index({ username: "text", email: "text", city: "text" });
 
 export default mongoose.model("User", userSchema);
