@@ -1,4 +1,4 @@
-function buildQueryObject(req) {
+function buildQueryObject(req, excludeIds = []) {
 	const { page = 1, limit = 10, search = "", filter = "{}" } = req.query;
 	console.log("page", page, "limit", limit, "search", search, "filter", filter);
 
@@ -20,6 +20,11 @@ function buildQueryObject(req) {
 	// Only add $text search if a search string is provided
 	if (search) {
 		conditions.push({ $text: { $search: search } });
+	}
+
+	// Add exclusion of certain user IDs if provided
+	if (excludeIds.length > 0) {
+		conditions.push({ _id: { $nin: excludeIds } });
 	}
 
 	// Build the filter object

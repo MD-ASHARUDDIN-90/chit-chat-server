@@ -5,6 +5,7 @@ import {
 	updateDisplayPicture,
 	updateUserData,
 	updateUserPassword,
+	getPeopleYouMayKnow,
 } from "../controllers/userController.js";
 import { uploadMiddleware } from "../middleware/multerMiddleware.js";
 
@@ -15,5 +16,6 @@ router.get("/posts", getMyPosts);
 router.put("/update", uploadMiddleware, updateUserData);
 router.put("/update/display-picture", uploadMiddleware, updateDisplayPicture);
 router.put("/update-password", updateUserPassword);
+router.get("/people-you-may-know", getPeopleYouMayKnow);
 
 export default router;

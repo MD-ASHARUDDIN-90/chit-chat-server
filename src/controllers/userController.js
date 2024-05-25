@@ -119,8 +119,40 @@ async function updateDisplayPicture(req, res) {
 		const user = await User.findByIdAndUpdate(id, req.body, {
 			new: true,
 		}).select("-password -otp -otp_expiry");
-		console.log("user", user);
 		res.status(200).json(user);
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+async function getPeopleYouMayKnow(req, res) {
+	try {
+		let { id } = req.user;
+
+		const currentUser = await User.findById(id).select(
+			"-password -otp -otp_expiry",
+		);
+
+		// Pass excludeIds to buildQueryObject only if necessary
+		const excludeIds = [...currentUser.following, ...currentUser.friends, id];
+		const { page, limit, filterObject } = buildQueryObject(req, excludeIds);
+
+		// Define fields to select and populate options
+		const selectFields = "-password -otp -otp_expiry -socketId "; // Adjust fields as needed
+		const populateOptions = []; // Add any necessary populate options
+
+		// Get paginated results
+		const peopleYouMayKnow = await getPaginatedResults(
+			User,
+			filterObject,
+			page,
+			limit,
+			populateOptions,
+			selectFields,
+		);
+
+		// Respond with the paginated results
+		res.status(200).json(peopleYouMayKnow);
 	} catch (error) {
 		res.status(500).json({ message: "Internal server error" });
 	}
@@ -132,4 +164,5 @@ export {
 	updateUserPassword,
 	getMyPosts,
 	updateDisplayPicture,
+	getPeopleYouMayKnow,
 };
