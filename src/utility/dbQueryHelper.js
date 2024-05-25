@@ -1,4 +1,4 @@
-function buildQueryObject(req, excludeIds = []) {
+function buildQueryObject(req, excludeIds = [], includeIds = []) {
 	const { page = 1, limit = 10, search = "", filter = "{}" } = req.query;
 	console.log("page", page, "limit", limit, "search", search, "filter", filter);
 
@@ -25,6 +25,11 @@ function buildQueryObject(req, excludeIds = []) {
 	// Add exclusion of certain user IDs if provided
 	if (excludeIds.length > 0) {
 		conditions.push({ _id: { $nin: excludeIds } });
+	}
+
+	// Include only the users with IDs in includeIds
+	if (includeIds.length > 0) {
+		conditions.push({ _id: { $in: includeIds } });
 	}
 
 	// Build the filter object

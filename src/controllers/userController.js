@@ -129,12 +129,21 @@ async function getPeopleYouMayKnow(req, res) {
 	try {
 		let { id } = req.user;
 
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
 		const currentUser = await User.findById(id).select(
 			"-password -otp -otp_expiry",
 		);
 
 		// Pass excludeIds to buildQueryObject only if necessary
-		const excludeIds = [...currentUser.following, ...currentUser.friends, id];
+		const excludeIds = [
+			...currentUser.following,
+			...currentUser.friends,
+			...currentUser.removedSuggestions,
+			id,
+		];
 		const { page, limit, filterObject } = buildQueryObject(req, excludeIds);
 
 		// Define fields to select and populate options
@@ -158,6 +167,144 @@ async function getPeopleYouMayKnow(req, res) {
 	}
 }
 
+async function getPeopleYouFollow(req, res) {
+	try {
+		let { id } = req.user;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const currentUser = await User.findById(id).select(
+			"-password -otp -otp_expiry",
+		);
+
+		// Get the list of user IDs that the current user is following
+		const followingIds = currentUser.following.map((f) => f._id);
+
+		// If followingIds is empty, return an empty result set
+		if (followingIds.length === 0) {
+			return res
+				.status(200)
+				.json({ data: [], total: 0, page: 1, limit: 10, filter: {} });
+		}
+
+		const { page, limit, filterObject } = buildQueryObject(
+			req,
+			[id],
+			followingIds,
+		);
+		const selectFields = "-password -otp -otp_expiry -socketId "; // Adjust fields as needed
+		const populateOptions = []; // Add any necessary populate options
+		const peopleYouFollow = await getPaginatedResults(
+			User,
+			filterObject,
+			page,
+			limit,
+			populateOptions,
+			selectFields,
+		);
+		res.status(200).json(peopleYouFollow);
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+async function followUserRequestHandler(req, res) {
+	try {
+		const { id } = req.user;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const { targetUserId, action } = req.body;
+		const user = await User.findById(id);
+		const targetUser = await User.findById(targetUserId);
+
+		if (!user || !targetUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		if (action === "follow") {
+			if (!user.following.includes(targetUserId)) {
+				user.following.push(targetUserId);
+				targetUser.followers.push(id);
+				await Promise.all([user.save(), targetUser.save()]);
+				return res.status(200).json({ message: "User followed successfully" });
+			}
+		} else if (action === "unfollow") {
+			if (user.following.includes(targetUserId)) {
+				user.following = user.following.filter(
+					(userId) => userId.toString() !== targetUserId,
+				);
+
+				if (user.removedSuggestions.includes(targetUserId)) {
+					console.log("targetUserId removing 1", targetUserId);
+					user.removedSuggestions = user.removedSuggestions.filter(
+						(userId) => userId.toString() !== targetUserId,
+					);
+				}
+				targetUser.followers = targetUser.followers.filter(
+					(userId) => userId.toString() !== id,
+				);
+				await Promise.all([user.save(), targetUser.save()]);
+				return res
+					.status(200)
+					.json({ message: "User unfollowed successfully" });
+			}
+		} else if (action === "remove") {
+			if (!user.removedSuggestions.includes(targetUserId)) {
+				console.log("targetUserId removing 2", targetUserId);
+				user.removedSuggestions.push(targetUserId);
+				await Promise.all([user.save(), targetUser.save()]);
+				return res.status(200).json({ message: "User removed successfully" });
+			}
+		}
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+async function searchUsers(req, res) {
+	try {
+		let { id } = req.user;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const currentUser = await User.findById(id).select(
+			"-password -otp -otp_expiry",
+		);
+
+		if (!currentUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		const excludeIds = [id];
+
+		const { page, limit, filterObject } = buildQueryObject(req, excludeIds);
+
+		// Define fields to select and populate options
+		const selectFields = "-password -otp -otp_expiry -socketId "; // Adjust fields as needed
+		const populateOptions = []; // Add any necessary populate options
+
+		const usersFound = await getPaginatedResults(
+			User,
+			filterObject,
+			page,
+			limit,
+			populateOptions,
+			selectFields,
+		);
+
+		res.status(200).json(usersFound);
+	} catch (error) {
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
 export {
 	getUserData,
 	updateUserData,
@@ -165,4 +312,7 @@ export {
 	getMyPosts,
 	updateDisplayPicture,
 	getPeopleYouMayKnow,
+	followUserRequestHandler,
+	getPeopleYouFollow,
+	searchUsers,
 };

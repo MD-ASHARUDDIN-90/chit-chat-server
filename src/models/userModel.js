@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema({
 		{ type: mongoose.Schema.Types.ObjectId, ref: "User" },
 	],
 	friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+	removedSuggestions: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
+
+// Create a text index on the title, description, and tags fields for full-text search
+userSchema.index({ username: "text", email: "text", city: "text" });
 
 export default mongoose.model("User", userSchema);
