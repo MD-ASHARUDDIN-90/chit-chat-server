@@ -583,6 +583,111 @@ async function friendRequestHandler(req, res) {
 		res.status(500).json({ message: "Internal server error" });
 	}
 }
+
+async function getAllFriendsRequests(req, res) {
+	try {
+		const { id } = req.user;
+		const { action } = req.params;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const currentUser = await User.findById(id).select(
+			"-password -otp -otp_expiry",
+		);
+		if (!currentUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		// Get the list of user IDs that the current user has received friend requests from or sent friend requests to
+
+		let receivedRequestOrSentRequestIds;
+		if (action === "friendRequestsSent") {
+			receivedRequestOrSentRequestIds = currentUser.friendRequestsSent.map(
+				(f) => f._id,
+			);
+		} else if (action === "friendRequestsReceived") {
+			receivedRequestOrSentRequestIds = currentUser.friendRequestsReceived.map(
+				(f) => f._id,
+			);
+		}
+
+		if (receivedRequestOrSentRequestIds.length === 0) {
+			return res
+				.status(200)
+				.json({ data: [], total: 0, page: 1, limit: 10, filter: {} });
+		}
+
+		const { page, limit, filterObject } = buildQueryObject(
+			req,
+			[id],
+			receivedRequestOrSentRequestIds,
+		);
+		const selectFields = "-password -otp -otp_expiry -socketId "; // Adjust fields as needed
+		const populateOptions = []; // Add any necessary populate options
+		const receivedFriendRequestsOrSentFriendRequests =
+			await getPaginatedResults(
+				User,
+				filterObject,
+				page,
+				limit,
+				populateOptions,
+				selectFields,
+			);
+		res.status(200).json(receivedFriendRequestsOrSentFriendRequests);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
+
+async function getAllMyFriends(req, res) {
+	try {
+		const { id } = req.user;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const currentUser = await User.findById(id).select(
+			"-password -otp -otp_expiry",
+		);
+		if (!currentUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		// Get the list of user IDs that the current user has received friend requests from or sent friend requests to
+
+		const myFriendIds = currentUser.friends.map((f) => f._id);
+
+		if (myFriendIds.length === 0) {
+			return res
+				.status(200)
+				.json({ data: [], total: 0, page: 1, limit: 10, filter: {} });
+		}
+
+		const { page, limit, filterObject } = buildQueryObject(
+			req,
+			[id],
+			myFriendIds,
+		);
+		const selectFields = "-password -otp -otp_expiry -socketId "; // Adjust fields as needed
+		const populateOptions = []; // Add any necessary populate options
+		const myFriendsList = await getPaginatedResults(
+			User,
+			filterObject,
+			page,
+			limit,
+			populateOptions,
+			selectFields,
+		);
+		res.status(200).json(myFriendsList);
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
 export {
 	getUserData,
 	updateUserData,
@@ -594,4 +699,6 @@ export {
 	getPeopleYouFollow,
 	searchUsers,
 	friendRequestHandler,
+	getAllFriendsRequests,
+	getAllMyFriends,
 };

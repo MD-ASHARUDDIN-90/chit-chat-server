@@ -10,6 +10,8 @@ import {
 	getPeopleYouFollow,
 	searchUsers,
 	friendRequestHandler,
+	getAllFriendsRequests,
+	getAllMyFriends,
 } from "../controllers/userController.js";
 import { uploadMiddleware } from "../middleware/multerMiddleware.js";
 
@@ -25,5 +27,7 @@ router.post("/follow-user", followUserRequestHandler);
 router.get("/following", getPeopleYouFollow);
 router.get("/search-people", searchUsers);
 router.post("/friend-request", friendRequestHandler);
+router.get("/my-friends", getAllMyFriends);
+router.get("/friend-requests/:action", getAllFriendsRequests);
 
 export default router;
