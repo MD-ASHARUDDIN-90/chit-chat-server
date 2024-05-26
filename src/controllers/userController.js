@@ -7,6 +7,7 @@ import {
 } from "../utility/hashedPassword.js";
 import { buildQueryObject } from "../utility/dbQueryHelper.js";
 import { getPaginatedResults } from "../utility/getPaginatedResult.js";
+import { io } from "../utility/socket.js";
 
 async function getUserData(req, res) {
 	try {
@@ -305,6 +306,283 @@ async function searchUsers(req, res) {
 	}
 }
 
+// async function friendRequestHandler(req, res) {
+// 	try {
+// 		const { id } = req.user;
+// 		const { targetUserId, action } = req.body;
+
+// 		if (!id) {
+// 			return res.status(401).json({ message: "Unauthorized" });
+// 		}
+
+// 		const user = await User.findById(id);
+// 		const targetUser = await User.findById(targetUserId);
+
+// 		if (!user || !targetUser) {
+// 			return res.status(404).json({ message: "User not found" });
+// 		}
+
+// 		if (action === "send") {
+// 			if (!user.friendRequestsSent.includes(targetUserId)) {
+// 				user.friendRequestsSent.push(targetUserId);
+// 				targetUser.friendRequestsReceived.push(id);
+// 				if (!user.following.includes(targetUserId)) {
+// 					user.following.push(targetUserId);
+// 				}
+// 				if (!targetUser.followers.includes(id)) {
+// 					targetUser.followers.push(id);
+// 				}
+// 				await Promise.all([user.save(), targetUser.save()]);
+// 				return res
+// 					.status(200)
+// 					.json({ message: "Friend request sent successfully" });
+// 			}
+// 		} else if (action === "cancel") {
+// 			if (user.friendRequestsSent.includes(targetUserId)) {
+// 				user.friendRequestsSent = user.friendRequestsSent.filter(
+// 					(userId) => userId.toString() !== targetUserId,
+// 				);
+
+// 				targetUser.friendRequestsReceived =
+// 					targetUser.friendRequestsReceived.filter(
+// 						(userId) => userId.toString() !== id,
+// 					);
+// 				await Promise.all([user.save(), targetUser.save()]);
+// 				return res
+// 					.status(200)
+// 					.json({ message: "Friend request cancelled successfully" });
+// 			}
+// 		} else if (action === "accept") {
+// 			if (!user.friends.includes(targetUserId)) {
+// 				user.friends.push(targetUserId);
+// 				targetUser.friends.push(id);
+
+// 				user.friendRequestsSent = user.friendRequestsSent.filter(
+// 					(userId) => userId.toString() !== targetUserId,
+// 				);
+// 				targetUser.friendRequestsReceived =
+// 					targetUser.friendRequestsReceived.filter(
+// 						(userId) => userId.toString() !== id,
+// 					);
+
+// 				if (!user.following.includes(targetUserId)) {
+// 					user.following.push(targetUserId);
+// 				}
+
+// 				if (!user.followers.includes(targetUserId)) {
+// 					user.followers.push(targetUserId);
+// 				}
+
+// 				if (!targetUser.following.includes(id)) {
+// 					targetUser.following.push(id);
+// 				}
+
+// 				if (!targetUser.followers.includes(id)) {
+// 					targetUser.followers.push(id);
+// 				}
+
+// 				if (user.removedSuggestions.includes(targetUserId)) {
+// 					user.removedSuggestions = user.removedSuggestions.filter(
+// 						(userId) => userId.toString() !== targetUserId,
+// 					);
+// 				}
+
+// 				if (targetUser.removedSuggestions.includes(id)) {
+// 					targetUser.removedSuggestions = targetUser.removedSuggestions.filter(
+// 						(userId) => userId.toString() !== id,
+// 					);
+// 				}
+
+// 				await Promise.all([user.save(), targetUser.save()]);
+// 				return res.status(200).json({ message: "Friend request accepted" });
+// 			}
+// 		} else if (action === "decline") {
+// 			if (user.friends.includes(targetUserId)) {
+// 				user.friends = user.friends.filter(
+// 					(userId) => userId.toString() !== targetUserId,
+// 				);
+// 				targetUser.friends = targetUser.friends.filter(
+// 					(userId) => userId.toString() !== id,
+// 				);
+
+// 				user.friendRequestsSent = user.friendRequestsSent.filter(
+// 					(userId) => userId.toString() !== targetUserId,
+// 				);
+// 				targetUser.friendRequestsReceived =
+// 					targetUser.friendRequestsReceived.filter(
+// 						(userId) => userId.toString() !== id,
+// 					);
+
+// 				await Promise.all([user.save(), targetUser.save()]);
+// 				return res.status(200).json({ message: "Friend request declined" });
+// 			}
+// 		}
+// 	} catch (error) {
+// 		res.status(500).json({ message: "Internal server error" });
+// 	}
+// }
+
+async function friendRequestHandler(req, res) {
+	try {
+		const { id } = req.user;
+		const { targetUserId, action } = req.body;
+
+		if (!id) {
+			return res.status(401).json({ message: "Unauthorized" });
+		}
+
+		const [user, targetUser] = await Promise.all([
+			User.findById(id),
+			User.findById(targetUserId),
+		]);
+
+		if (!user || !targetUser) {
+			return res.status(404).json({ message: "User not found" });
+		}
+
+		let message = "Action could not be performed";
+		let eventName = "";
+		switch (action) {
+			case "send":
+				if (!user.friendRequestsSent.includes(targetUserId)) {
+					user.friendRequestsSent.push(targetUserId);
+					targetUser.friendRequestsReceived.push(id);
+
+					if (!user.following.includes(targetUserId)) {
+						user.following.push(targetUserId);
+						targetUser.followers.push(id);
+					}
+
+					await Promise.all([user.save(), targetUser.save()]);
+					message = "Friend request sent successfully";
+					eventName = "friendRequestSent";
+				}
+				break;
+
+			case "cancel":
+				if (user.friendRequestsSent.includes(targetUserId)) {
+					user.friendRequestsSent = user.friendRequestsSent.filter(
+						(userId) => userId.toString() !== targetUserId,
+					);
+					targetUser.friendRequestsReceived =
+						targetUser.friendRequestsReceived.filter(
+							(userId) => userId.toString() !== id,
+						);
+
+					await Promise.all([user.save(), targetUser.save()]);
+					message = "Friend request cancelled successfully";
+					eventName = "friendRequestCancelled";
+				}
+				break;
+
+			case "accept":
+				console.log("accept", 0);
+				if (user.friendRequestsReceived.includes(targetUserId)) {
+					console.log("accept", 1);
+					user.friends.push(targetUserId);
+					targetUser.friends.push(id);
+
+					targetUser.friendRequestsSent = targetUser.friendRequestsSent.filter(
+						(userId) => userId.toString() !== id,
+					);
+					user.friendRequestsReceived = user.friendRequestsReceived.filter(
+						(userId) => userId.toString() !== targetUserId,
+					);
+					console.log("accept", 2);
+
+					if (!user.following.includes(targetUserId)) {
+						user.following.push(targetUserId);
+						targetUser.followers.push(id);
+					}
+
+					if (!targetUser.following.includes(id)) {
+						targetUser.following.push(id);
+						user.followers.push(targetUserId);
+					}
+
+					console.log("accept", 3);
+
+					if (user.removedSuggestions.includes(targetUserId)) {
+						user.removedSuggestions = user.removedSuggestions.filter(
+							(userId) => userId.toString() !== targetUserId,
+						);
+					}
+					if (targetUser.removedSuggestions.includes(id)) {
+						targetUser.removedSuggestions =
+							targetUser.removedSuggestions.filter(
+								(userId) => userId.toString() !== id,
+							);
+					}
+					console.log("accept", 4);
+
+					await Promise.all([user.save(), targetUser.save()]);
+					message = "Friend request accepted";
+					eventName = "friendRequestAccepted";
+				}
+				break;
+
+			case "decline":
+				console.log(
+					"declining request",
+					"id",
+					id,
+					"targetUserId",
+					targetUserId,
+				);
+				if (user.friendRequestsReceived.includes(targetUserId)) {
+					console.log("declining request", 1);
+					user.friendRequestsReceived = user.friendRequestsReceived.filter(
+						(userId) => userId.toString() !== targetUserId,
+					);
+					targetUser.friendRequestsSent = targetUser.friendRequestsSent.filter(
+						(userId) => userId.toString() !== id,
+					);
+
+					console.log("declining request", 2);
+
+					await Promise.all([user.save(), targetUser.save()]);
+					message = "Friend request declined";
+					eventName = "friendRequestDeclined";
+				}
+				break;
+			case "unfriend":
+				console.log("unfriend", 0);
+				console.log("unfriend", user.friends);
+				console.log("unfriend", user.friends.includes(targetUserId));
+				if (user.friends.includes(targetUserId)) {
+					console.log("unfriend", 1);
+					user.friends = user.friends.filter(
+						(userId) => userId.toString() !== targetUserId,
+					);
+					targetUser.friends = targetUser.friends.filter(
+						(userId) => userId.toString() !== id,
+					);
+					console.log("unfriend", 2);
+					await Promise.all([user.save(), targetUser.save()]);
+					message = "Unfriended successfully";
+					eventName = "unfriend";
+				}
+				break;
+
+			default:
+				return res.status(400).json({ message: "Invalid action" });
+		}
+
+		if (eventName) {
+			console.log("socket target", targetUser.socketId);
+			io.to(targetUser.socketId).emit(eventName, {
+				info: message,
+				from: user.username,
+				to: targetUser.username,
+			});
+		}
+
+		return res.status(200).json({ message });
+	} catch (error) {
+		console.error(error);
+		res.status(500).json({ message: "Internal server error" });
+	}
+}
 export {
 	getUserData,
 	updateUserData,
@@ -315,4 +593,5 @@ export {
 	followUserRequestHandler,
 	getPeopleYouFollow,
 	searchUsers,
+	friendRequestHandler,
 };
