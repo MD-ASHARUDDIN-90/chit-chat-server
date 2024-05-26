@@ -172,7 +172,7 @@ const logout = async (req, res) => {
 
 		const { error } = await verifyRefreshToken(refreshToken);
 		if (error) {
-			return res.status(401).json({ message });
+			return res.status(401).json({ message: "Unauthorized" });
 		}
 
 		const userToken = await UserToken.findOne({ token: refreshToken });
