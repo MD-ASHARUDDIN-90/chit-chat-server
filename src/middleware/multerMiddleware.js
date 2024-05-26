@@ -1,6 +1,7 @@
 import multer from "multer";
 
-const fileDirectory = process.env.NODE_ENV === "production" ? "/tmp" : "./tmp";
+const fileDirectory =
+	process.env.NODE_ENV === "production" ? "./public/temp" : "./tmp";
 
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
